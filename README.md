@@ -340,15 +340,3 @@ Access the running application at `http://localhost:8080`.
 - **Automated CI/CD**: Integrate GitHub Actions for continuous model evaluation and deployment.
 
 ---
-
-## Attribution
-
-**ChestXpert** is a redesigned, extended portfolio presentation built upon the open-source base project **[End-to-End-Chest-Disease-Classification](https://github.com/KalyanM45/End-to-End-Chest-Disease-Classification)** by **Hema Kalyan Murapaka (KalyanM45)**.
-
-The underlying machine learning architecture, dataset structure, DVC stage framework, and core `Respire` package design originate from the original source. ChestXpert maintains full legal open-source credit while presenting a refreshed user interface, updated branding, clean project structure, and comprehensive documentation for educational and portfolio presentation.
-
----
-
-## License
-
-This project inherited its codebase from an open-source source licensed under the **GNU General Public License v3.0 (GPL-3.0)**. Refer to the original open-source license terms for complete details.
