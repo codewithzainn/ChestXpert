@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="ChestXpert — AI-powered chest CT scan classification. Upload a scan and receive an instant binary prediction: Normal or Adenocarcinoma Cancer.">
+<title>ChestXpert &middot; AI-Powered Chest CT Classification</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1b2d6b;
+    --navy-light:#2f4090;
+    --bg-grad-1:#eef2ff;
+    --bg-grad-2:#f7f9ff;
+    --green:#1c9d63;
+    --green-bg:#e6f8ef;
+    --red:#d9394a;
+    --red-bg:#fdeaec;
+    --border:#e3e6f0;
+    --text-muted:#6b7280;
+    --shadow:0 10px 30px rgba(27,45,107,0.08);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    font-family:'Inter',system-ui,sans-serif;
+    background:linear-gradient(160deg,var(--bg-grad-1) 0%,var(--bg-grad-2) 55%,#ffffff 100%);
+    color:#1f2430;
+    padding:32px 16px 60px;
+  }
+  .page{max-width:1000px;margin:0 auto;}
+
+  header.top{text-align:center;margin-bottom:32px;}
+  header.top .badge{
+    display:inline-flex;align-items:center;gap:6px;
+    background:#fff;border:1px solid var(--border);
+    padding:6px 14px;border-radius:999px;
+    font-size:12px;font-weight:600;color:var(--navy);
+    box-shadow:var(--shadow);margin-bottom:16px;
+  }
+  header.top h1{
+    font-size:32px;font-weight:800;color:var(--navy);margin:0 0 8px;
+    letter-spacing:-0.02em;
+  }
+  header.top p{color:var(--text-muted);margin:0;font-size:15px;}
+
+  .grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:24px;
+  }
+  @media (max-width:760px){ .grid{grid-template-columns:1fr;} }
+
+  .card{
+    background:#fff;border:1px solid var(--border);border-radius:18px;
+    padding:24px;box-shadow:var(--shadow);
+  }
+  .card h2{
+    font-size:14px;text-transform:uppercase;letter-spacing:0.06em;
+    color:var(--text-muted);margin:0 0 16px;font-weight:700;
+  }
+
+  .drop-zone{
+    height:280px;border-radius:14px;
+    border:2px dashed #c7cef0;
+    background:#f8f9fe;
+    display:flex;align-items:center;justify-content:center;
+    position:relative;overflow:hidden;
+  }
+  .drop-zone .placeholder{
+    text-align:center;color:var(--text-muted);padding:20px;
+  }
+  .drop-zone .placeholder .icon{font-size:38px;display:block;margin-bottom:10px;}
+  .drop-zone .placeholder .sub{font-size:12px;margin-top:6px;color:#9aa1b5;}
+  .drop-zone img{
+    position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+    background:#0c1330;display:none;
+  }
+  .drop-zone video{display:none;}
+
+  .btn-row{display:flex;gap:10px;margin-top:16px;}
+  .btn{
+    flex:1;border:none;border-radius:10px;padding:12px 14px;
+    font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;
+    transition:transform .12s ease, box-shadow .12s ease;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .btn:active{transform:scale(0.97);}
+  .btn-upload{background:#eef1ff;color:var(--navy);}
+  .btn-upload:hover{background:#e1e6ff;}
+  .btn-predict{background:var(--navy);color:#fff;box-shadow:0 6px 16px rgba(27,45,107,0.25);}
+  .btn-predict:hover{background:var(--navy-light);}
+
+  .result-empty{
+    height:280px;display:flex;align-items:center;justify-content:center;
+    text-align:center;color:#9aa1b5;font-size:14px;padding:20px;
+  }
+  .result-empty .icon{font-size:34px;display:block;margin-bottom:10px;}
+
+  .result-badge{
+    height:280px;border-radius:14px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;gap:6px;
+  }
+  .result-normal{background:var(--green-bg);border:1px solid #b9ecd2;}
+  .result-disease{background:var(--red-bg);border:1px solid #f6c3c9;}
+  .result-icon{font-size:52px;line-height:1;}
+  .result-label{font-size:22px;font-weight:800;}
+  .result-normal .result-label{color:var(--green);}
+  .result-disease .result-label{color:var(--red);}
+  .result-sub{font-size:13px;color:var(--text-muted);max-width:260px;}
+
+  footer{text-align:center;margin-top:28px;color:#9aa1b5;font-size:12px;line-height:1.6;}
+  footer strong{color:var(--navy);}
+
+  #loading{
+    position:fixed;inset:0;z-index:9999;background:rgba(255,255,255,0.75);
+    display:none;align-items:center;justify-content:center;
+  }
+  .loader{
+    width:52px;height:52px;border-radius:50%;
+    border:5px solid #e3e6f0;border-top-color:var(--navy);
+    animation:spin 0.9s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  input[type="file"]{display:none;}
+</style>
+</head>
+<body>
+  <div class="page">
+    <header class="top">
+      <div class="badge">🫁 ChestXpert &middot; VGG16 Transfer Learning</div>
+      <h1>ChestXpert</h1>
+      <p>AI-Powered Chest CT Classification &mdash; upload a scan and receive an instant prediction</p>
+    </header>
+
+    <div class="grid">
+      <div class="card">
+        <h2>CT Scan Image</h2>
+        <div class="drop-zone" id="dropZone">
+          <video autoplay id="video"></video>
+          <img src="" id="photo">
+          <canvas style="display:none;" id="canvas"></canvas>
+          <div class="placeholder" id="placeholder">
+            <span class="icon">📤</span>
+            Click "Upload" to select a chest CT-scan image
+            <div class="sub">JPG or PNG recommended</div>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button type="button" class="btn btn-upload" id="uload">📁 Upload</button>
+          <button type="button" class="btn btn-predict" id="send">🔍 Predict</button>
+        </div>
+        <input type="hidden" id="url" value="../predict"/>
+        <input name="upload" type="file" id="fileinput" accept="image/*"/>
+      </div>
+
+      <div class="card">
+        <h2>Prediction Result</h2>
+        <div class="res-part2" style="display:none;"></div>
+        <div class="res-part">
+          <div class="result-empty" id="resultEmpty">
+            <span class="icon">🩻</span>
+            Upload a scan and click <strong>Predict</strong> to see the result
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <strong>ChestXpert</strong> &middot; Built with TensorFlow, Keras (VGG16) &amp; Flask<br>
+      <strong>Educational demo only &mdash; not a substitute for professional medical diagnosis.</strong>
+    </footer>
+  </div>
+
+  <div id="loading"><div class="loader"></div></div>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script>
+  var base_data = "";
+
+  function sendRequest(base64Data){
+    if(base64Data == "" || base64Data == null){ return; }
+    var url = $("#url").val();
+    $("#loading").css("display","flex");
+    $.ajax({
+      url: url,
+      type: "post",
+      cache: false,
+      async: true,
+      crossDomain: true,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin':'*'
+      },
+      data: JSON.stringify({image: base64Data}),
+      success: function(res){
+        $(".res-part").html("");
+
+        var prediction = "Unknown";
+        try{ prediction = res[0].image; }catch(e){}
+
+        var isNormal = prediction.toLowerCase().indexOf("normal") !== -1;
+        var badgeClass = isNormal ? "result-badge result-normal" : "result-badge result-disease";
+        var icon = isNormal ? "&#9989;" : "&#9888;&#65039;";
+        var sub = isNormal
+          ? "No signs of disease detected in this scan."
+          : "Signs consistent with this condition were detected. Please consult a radiologist for confirmation.";
+
+        var html = "<div class='" + badgeClass + "'>" +
+                     "<div class='result-icon'>" + icon + "</div>" +
+                     "<div class='result-label'>" + prediction + "</div>" +
+                     "<div class='result-sub'>" + sub + "</div>" +
+                   "</div>";
+        $(".res-part").html(html);
+        $("#loading").hide();
+      },
+      error: function(){
+        $(".res-part").html("<div class='result-empty'><span class='icon'>&#9888;&#65039;</span>Something went wrong. Please try again.</div>");
+        $("#loading").hide();
+      }
+    });
+  }
+
+  $(document).ready(function(){
+    $("#loading").hide();
+
+    $('#send').click(function(){ sendRequest(base_data); });
+
+    $('#uload').click(function(){ $('#fileinput').trigger('click'); });
+
+    $("#fileinput").change(function(){
+      if (this.files && this.files[0]){
+        var reader = new FileReader();
+        reader.onload = function (e){
+          var url = e.target.result;
+          var img = new Image();
+          img.crossOrigin = 'Anonymous';
+          img.onload = function(){
+            var canvas = document.createElement('CANVAS');
+            var ctx = canvas.getContext('2d');
+            canvas.height = this.height;
+            canvas.width = this.width;
+            ctx.drawImage(this, 0, 0);
+            base_data = canvas.toDataURL('image/jpeg', 1.0).replace(/^data:image.+;base64,/, '');
+            canvas = null;
+          };
+          img.src = url;
+          $('#placeholder').hide();
+          $('#photo').attr('src', url).show();
+          $('#video').hide();
+        }
+        reader.readAsDataURL(this.files[0]);
+      }
+    });
+  });
+  </script>
+</body>
+</html>
